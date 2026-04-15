@@ -345,7 +345,6 @@ File: `screenshots/07-clean-teardown.png`
 Capture:
 
 - stopped/exited containers no longer running as host processes
-- supervisor clean shutdown or absence of zombies
 
 ![Clean teardown](./screenshots/07-clean-teardown.png)
 

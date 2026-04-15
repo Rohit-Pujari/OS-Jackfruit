@@ -258,95 +258,45 @@ What to compare:
 
 ### 1. Multi-container supervision
 
-File: `screenshots/01-multi-container.png`
-
-Capture:
-
-- supervisor running in one terminal
-- two or more containers started from another terminal
-- `./engine ps` showing at least two live containers
-
-
-Two containers running under one supervisor process.
 ![Multi-container supervision](./screenshots/01-multi-container.png)
 
-
+Two containers running under one supervisor process.
 
 ### 2. Metadata tracking
 
-File: `screenshots/02-ps-metadata.png`
+![Metadata tracking](./screenshots/02-ps-metadata.png)
 
-Capture:
-- `./engine ps`
-- visible fields for container ID, PID, state, limits, exit info, and log path
-
-![Meatadata tracking](./screenshots/02-ps-metadata.png)
+`./engine ps` showing container ID, host PID, state, configured limits, exit details, and log path.
 
 ### 3. Bounded-buffer logging
 
-File: `screenshots/03-logging.png`
-
-Capture:
-
-- a container that prints multiple lines
-- `./engine logs <id>`
-- optionally `ls boilerplate/logs` or `cat boilerplate/logs/<id>.log`
-
 ![Logging](./screenshots/03-logging.png)
+
+Container output captured through the supervisor logging pipeline and written into per-container log files.
 
 ### 4. CLI and IPC
 
-File: `screenshots/04-cli-ipc.png`
-
-Capture:
-
-- one terminal running the supervisor
-- another terminal issuing a command like `start`, `ps`, or `stop`
-
 ![CLI IPC](./screenshots/04-cli-ipc.png)
 
-### 5. Soft-limit warning
+Short-lived CLI clients communicate with the long-running supervisor over the UNIX domain socket at `/tmp/mini_runtime.sock`.
 
-File: `screenshots/05-soft-hard-limit.png`
+### 5. Soft-limit and hard-limit enforcement
 
-Capture:
+![Soft and hard limits](./screenshots/05-soft-hard-limit.png)
 
-- output of `sudo dmesg | grep container_monitor`
+The kernel monitor first emits a soft-limit warning, then crosses the hard limit and kills the container. The supervisor records the final state as `killed`.
 
-![Soft limit](./screenshots/05-soft-hard-limit.png)
-
-Place it in the `Memory Monitor Demonstration` section.
-
-### 6. Hard-limit enforcement
-
-File: `screenshots/05-soft-hard-limit.png`
-
-Capture:
-
-- `HARD LIMIT` line from `dmesg`
-- `./engine ps` showing the container state as `killed`
-
-![Hard limit](./screenshots/05-soft-hard-limit.png)
-
-### 7. Scheduling experiment
-
-File: `screenshots/06-scheduler.png`
-
-Capture:
-
-- logs from `cpu1` and `cpu2`
+### 6. Scheduling experiment
 
 ![Scheduling Experiment](./screenshots/06-scheduler.png)
 
-### 8. Clean teardown
+Concurrent CPU-bound and I/O-oriented workloads used to observe Linux scheduling behavior.
 
-File: `screenshots/07-clean-teardown.png`
-
-Capture:
-
-- stopped/exited containers no longer running as host processes
+### 7. Clean teardown
 
 ![Clean teardown](./screenshots/07-clean-teardown.png)
+
+Stopped or exited containers are reaped cleanly and no stale processes remain.
 
 
 ## Engineering Analysis
@@ -442,6 +392,17 @@ Tradeoff:
 Why this choice:
 
 - it directly connects the runtime to standard Linux scheduling behavior with minimal extra infrastructure
+
+## Scheduler Results
+
+The scheduler experiments were run a few times to make sure the pattern was consistent even if the exact timestamps shifted slightly from run to run.
+
+| Experiment | Configuration | Observation | Interpretation |
+| --- | --- | --- | --- |
+| CPU vs CPU | `cpu1: /cpu_hog 20 --nice 10`, `cpu2: /cpu_hog 20 --nice -5` | `cpu2` usually reached its later progress messages earlier and finished roughly 2 seconds before `cpu1`. | The lower nice value gave `cpu2` a better scheduler priority, so it received more CPU time when both CPU-bound tasks were competing. |
+| IO vs CPU | `io1: /io_pulse 10 200`, `cpu3: /cpu_hog 10` | `io1` kept printing regular iteration updates while `cpu3` stayed busy in the background, and the I/O task remained responsive throughout the run. | Linux handled the sleeping and waking I/O-heavy task in a way that preserved responsiveness while still allowing the CPU-bound task to consume spare CPU. |
+
+In short, the behavior matched what we expected from Linux scheduling: priority differences mattered when both tasks were CPU-heavy, while the mixed I/O and CPU workload showed the scheduler balancing responsiveness and throughput rather than treating both jobs the same.
 
 
 

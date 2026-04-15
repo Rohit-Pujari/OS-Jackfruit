@@ -443,18 +443,7 @@ Why this choice:
 
 - it directly connects the runtime to standard Linux scheduling behavior with minimal extra infrastructure
 
-## Scheduler Results
 
-Replace this section with your measured outputs after collecting screenshots and log excerpts.
-
-Suggested format:
-
-| Experiment | Configuration | Observation | Interpretation |
-| --- | --- | --- | --- |
-| CPU vs CPU | `cpu1 --nice 10`, `cpu2 --nice -5` | `ADD RESULT` | Lower nice value received more CPU time |
-| IO vs CPU | `io1`, `cpu3` | `ADD RESULT` | I/O workload remained responsive while CPU hog used spare CPU |
-
-You should fill this table using real timings or log progress from your VM.
 
 ## Cleanup
 

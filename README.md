@@ -254,9 +254,7 @@ What to compare:
 - progress behavior of the CPU-heavy task
 - fairness and interactivity under concurrent load
 
-## Screenshot Checklist
-
-Add a `screenshots/` folder in the repository root and store images with the filenames below. Then reference them in this README.
+## Screenshots
 
 ### 1. Multi-container supervision
 
